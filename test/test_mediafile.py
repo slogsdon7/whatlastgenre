@@ -17,7 +17,7 @@
 
 """mediafile tests"""
 
-from __future__ import print_function
+
 
 import os.path
 import shutil
@@ -149,7 +149,7 @@ class TestMediafile(unittest.TestCase):
 
     def test_id3v23_separator(self):
         track = self.get_track('mp3')
-        genre = ['Test', 'Music', unicode(time.time())]
+        genre = ['Test', 'Music', str(time.time())]
         track.set_meta('genre', genre)
         track.save()
         self.assertEqual(track.get_meta('genre'), genre)

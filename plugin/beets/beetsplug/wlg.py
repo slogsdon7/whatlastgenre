@@ -17,7 +17,7 @@
 
 """whatlastgenre beets plugin"""
 
-from __future__ import absolute_import
+
 
 from argparse import Namespace
 
@@ -38,8 +38,8 @@ class WhatLastGenre(BeetsPlugin):
             'auto': False,
             'force': False,
             'count': 4,
-            'separator': u', ',
-            'whitelist': u'wlg',  # wlg, beets or custom path
+            'separator': ', ',
+            'whitelist': 'wlg',  # wlg, beets or custom path
         })
         if self.config['auto'].get(bool):
             self.import_stages = [self.imported]
@@ -100,7 +100,7 @@ class WhatLastGenre(BeetsPlugin):
                 if album.genre != genres:
                     album.genre = genres
                     album.store()
-                    for item in album.items():
+                    for item in list(album.items()):
                         item.genre = genres
                         item.store()
                         if config['import']['write'].get(bool):
@@ -121,7 +121,7 @@ class WhatLastGenre(BeetsPlugin):
             if task.album.genre != genres:
                 task.album.genre = genres
                 task.album.store()
-                for item in task.album.items():
+                for item in list(task.album.items()):
                     item.genre = genres
                     item.store()
 
@@ -130,13 +130,13 @@ class WhatLastGenre(BeetsPlugin):
         the force option is not set or get genres from whatlastgenre.
         """
         if album.genre and not self.config['force']:
-            self._log.info(u'not forcing genre update for album {0}', album)
+            self._log.info('not forcing genre update for album {0}', album)
             return album.genre
 
         metadata = Metadata(
             path=album.item_dir(),
             type='beet',
-            artists=[(t.artist, t.mb_artistid) for t in album.items()],
+            artists=[(t.artist, t.mb_artistid) for t in list(album.items())],
             albumartist=(album.albumartist, album.mb_albumartistid),
             album=album.album,
             mbid_album=album.mb_albumid,
@@ -146,9 +146,9 @@ class WhatLastGenre(BeetsPlugin):
 
         genres, _ = self.wlg.query_album(metadata)
         try:
-            genres = self.config['separator'].get(unicode).join(genres)
-            self._log.info(u'genres for album {0}: {1}', album, genres)
+            genres = self.config['separator'].get(str).join(genres)
+            self._log.info('genres for album {0}: {1}', album, genres)
         except TypeError:
-            self._log.info(u'No genres found for album {0}', album)
+            self._log.info('No genres found for album {0}', album)
 
         return genres

@@ -23,7 +23,7 @@ somewhat constant they appear helpful anyway.  Make sure the failure
 is not caused by changed remote data.
 """
 
-from __future__ import print_function
+
 
 import unittest
 
@@ -66,12 +66,12 @@ class TestDataProvider(unittest.TestCase):
 
     def test_request_get(self):
         res = self.dapr._request(HTTPBIN_URL + 'get', self.params, 'GET')
-        args = {str(k): str(v) for k, v in res.json()['args'].items()}
+        args = {str(k): str(v) for k, v in list(res.json()['args'].items())}
         self.assertEqual(self.params, args)
 
     def test_request_post(self):
         res = self.dapr._request(HTTPBIN_URL + 'post', self.params, 'POST')
-        args = {str(k): str(v) for k, v in res.json()['form'].items()}
+        args = {str(k): str(v) for k, v in list(res.json()['form'].items())}
         self.assertEqual(self.params, args)
 
     def test_request_bad_status(self):
@@ -80,7 +80,7 @@ class TestDataProvider(unittest.TestCase):
 
     def test_request_json(self):
         res = self.dapr._request_json(HTTPBIN_URL + 'get', self.params, 'GET')
-        args = {str(k): str(v) for k, v in res['args'].items()}
+        args = {str(k): str(v) for k, v in list(res['args'].items())}
         self.assertEqual(self.params, args)
 
     def test_prefilter_results(self):

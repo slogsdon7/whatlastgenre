@@ -17,7 +17,7 @@
 
 """whatlastgenre cache"""
 
-from __future__ import print_function
+
 
 import json
 import os
@@ -79,7 +79,7 @@ class Cache(object):
         """Clean up expired entries."""
         print("Cleaning cache... ", end='')
         size = len(self.cache)
-        for key, val in self.cache.items():
+        for key, val in list(self.cache.items()):
             if time.time() > val[0] + self.expire_after:
                 del self.cache[key]
                 self.dirty = True
@@ -97,7 +97,7 @@ class Cache(object):
         print("Saving cache... ", end='')
         dirname, basename = os.path.split(self.fullpath)
         try:
-            with NamedTemporaryFile(prefix=basename + '.tmp_',
+            with NamedTemporaryFile(mode='w',prefix=basename + '.tmp_',
                                     dir=dirname, delete=False) as tmpfile:
                 tmpfile.write(json.dumps(self.cache))
                 os.fsync(tmpfile)
