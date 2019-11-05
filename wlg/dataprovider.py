@@ -374,9 +374,9 @@ class MusicBrainz(DataProvider):
 
     def query_album(self, album, artist=None, year=None, reltyp=None):
         """Query for album data."""
-        qry = 'releasegroup: %s' % album
+        qry = 'releasegroup:%s' % album
         if artist:
-            qry += ' AND artist: %s' % artist
+            qry += ' AND artist:%s' % artist
         return self._query('release-group', {'query': qry})
 
     def query_by_mbid(self, entity, mbid):
@@ -397,7 +397,7 @@ class Redacted(DataProvider):
         self.conf = conf
         # restore session cookie from config
         try:
-            cookie = base64.b64decode(self.conf.get('redacted', 'session'))
+            cookie = self.conf.get('redacted', 'session')
             self.session.cookies.set('session', cookie)
         except (NoSectionError, NoOptionError):
             pass
@@ -448,7 +448,7 @@ class Redacted(DataProvider):
         except (requests.exceptions.TooManyRedirects, AssertionError):
             raise RuntimeError('Redacted login failed')
         # save session cookie to config
-        cookie = base64.b64encode(self.session.cookies['session'])
+        cookie = self.session.cookies['session']
         if not self.conf.has_section('redacted'):
             self.conf.add_section('redacted')
         self.conf.set('redacted', 'session', cookie)
