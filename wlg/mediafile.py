@@ -46,11 +46,11 @@ MAPPING = {
         'releasetype': 'musicbrainz_albumtype',
     },
     'm4a': {
-        'catalognumber': None,
+        'catalognumber': 'CATALOGNUMBER',
         'edition': None,
-        'label': None,
-        'media': None,
-        'musicbrainz_releasegroupid': None,
+        'label': 'LABEL',
+        'media': 'MEDIA',
+        'musicbrainz_releasegroupid': 'musicbrainz_releasegroupid',
         'releasetype': 'musicbrainz_albumtype',
     },
 }
@@ -58,6 +58,16 @@ MAPPING = {
 Metadata = namedtuple(
     'Metadata', ['path', 'type', 'artists', 'albumartist', 'album',
                  'mbid_album', 'mbid_relgrp', 'year', 'releasetype'])
+
+
+from mutagen.easymp4 import EasyMP4Tags
+
+
+EasyMP4Tags.RegisterFreeformKey('musicbrainz_releasegroupid', 'MusicBrainz Release Group Id')
+EasyMP4Tags.RegisterFreeformKey('musicbrainz_albumtype', 'MusicBrainz Album Type')
+EasyMP4Tags.RegisterFreeformKey('label', 'LABEL')
+EasyMP4Tags.RegisterFreeformKey('media', 'MEDIA')
+EasyMP4Tags.RegisterFreeformKey('catalognumber', 'CATALOGNUMBER')
 
 
 def find_music_dirs(paths):
