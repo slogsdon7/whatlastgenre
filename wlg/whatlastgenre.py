@@ -20,8 +20,6 @@
 https://github.com/YetAnotherNerd/whatlastgenre
 """
 
-
-
 import configparser
 import argparse
 import itertools
@@ -662,7 +660,7 @@ class Config(configparser.SafeConfigParser):
             ]
 
     def __init__(self, args):
-        configparser.SafeConfigParser.__init__(self)
+        configparser.ConfigParser.__init__(self, interpolation=None)
         self.log = logging.getLogger(__name__)
         self.args = args
         self.path = os.path.expanduser('~/.whatlastgenre')
