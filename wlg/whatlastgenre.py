@@ -37,7 +37,7 @@ from datetime import timedelta
 from . import __version__, cache, dataprovider, mediafile
 
 Query = namedtuple(
-    'Query', ['dapr', 'type', 'str', 'score', 'artist', 'mbid_artist',
+    'Query', ['infohash', 'dapr', 'type', 'str', 'score', 'artist', 'mbid_artist',
               'album', 'mbid_album', 'mbid_relgrp', 'year', 'releasetype'])
 
 Stats = namedtuple('Stats', ['time', 'messages', 'genres', 'reltyps'])
@@ -135,7 +135,7 @@ class WhatLastGenre(object):
                 'must be activated! (multiple sources recommended)')
         return daprs
 
-    def progress_path(self, path):
+    def progress_path(self, path, infohash = None):
         """Create an Album object for a directory given by path to read and
         write metadata from/to.  Query top genre tags by album metadata,
         update metadata with results and save the album (its tracks).
@@ -149,8 +149,9 @@ class WhatLastGenre(object):
         # read album metadata
         metadata = album.get_metadata()
         # query genres (and releasetype) for album metadata
-        genres, release = self.query_album(metadata)
+        genres, release = self.query_album(metadata, infohash)
         # update album metadata
+
         if genres:
             album.set_meta('genre', genres)
             print("Genres:  %s" % ', '.join(genres).encode('utf-8'))
@@ -168,7 +169,7 @@ class WhatLastGenre(object):
         else:
             album.save()
 
-    def query_album(self, metadata):
+    def query_album(self, metadata, infohash=None):
         """Query for top genres of an album identified by metadata
         and return them and some releaseinfo."""
 
@@ -187,7 +188,7 @@ class WhatLastGenre(object):
                                       if num_artists > 1 else ''))
         taglib = TagLib(self.conf, self.whitelist, self.tags)
         release = None
-        for query in self.create_queries(metadata):
+        for query in self.create_queries(metadata, infohash):
             if not query.str:
                 continue
             try:
@@ -291,6 +292,8 @@ class WhatLastGenre(object):
     def query(self, query):
         """Perform a real DataProvider query."""
         res = None
+        if query.type == 'hash':
+            res = query.dapr.hash_query(query.infohash)
         if query.type == 'artist':
             try:  # query by mbid
                 if query.mbid_artist:
@@ -318,11 +321,11 @@ class WhatLastGenre(object):
             result['tags'] = preprocess_tags(result['tags'])
         return res
 
-    def create_queries(self, metadata):
+    def create_queries(self, metadata, infohash=None):
         """Create queries for all DataProviders based on metadata."""
         artists = metadata.artists
         if len(set(artists)) > 42:
-            self.log.warn('Too many artists for va-artist search')
+            self.log.warning('Too many artists for va-artist search')
             artists = []
         albumartist = searchstr(metadata.albumartist[0])
         album = searchstr(metadata.album)
@@ -330,8 +333,11 @@ class WhatLastGenre(object):
         # album queries
         for dapr in self.daprs:
             score = self.conf.getfloat('scores', 'src_%s' % dapr.name.lower())
-            queries.append(Query(
-                dapr=dapr, type='album', score=score,
+            querytype = 'album'
+            if infohash and dapr.name.lower() == 'redacted':
+                querytype = 'hash'
+            queries.append(Query(infohash=infohash,
+                dapr=dapr, type=querytype, score=score,
                 str=(albumartist + ' ' + album).strip(),
                 artist=albumartist, mbid_artist=metadata.albumartist[1],
                 album=album, mbid_album=metadata.mbid_album,
@@ -342,7 +348,7 @@ class WhatLastGenre(object):
             for dapr in self.daprs:
                 score = self.conf.getfloat('scores',
                                            'src_%s' % dapr.name.lower())
-                queries.append(Query(
+                queries.append(Query(infohash=None,
                     dapr=dapr, type='artist', score=score,
                     str=albumartist.strip(),
                     artist=albumartist, mbid_artist=metadata.albumartist[1],
@@ -355,7 +361,7 @@ class WhatLastGenre(object):
                 for dapr in self.daprs:
                     score = self.conf.getfloat('scores',
                                                'src_%s' % dapr.name.lower())
-                    queries.append(Query(
+                    queries.append(Query(infohash=None,
                         dapr=dapr, type='artist', str=artist.strip(),
                         score=artists.count((key, val)) * score,
                         artist=artist, mbid_artist=val,
@@ -859,6 +865,8 @@ def get_args():
                         help='get release info from redacted')
     parser.add_argument('-d', '--difflib', action='store_true',
                         help='enable difflib matching (slow)')
+    parser.add_argument('--hash', "-I", action='store_true', help="torrent hash to query redacted with")
+
     return parser.parse_args()
 
 
@@ -882,7 +890,10 @@ def main():
         for i, path in enumerate(sorted(paths), start=1):
             print('\n' + progressbar(i, len(paths)))
             print(path)
-            wlg.progress_path(path)
+            if args.hash:
+                wlg.progress_path(path, args.hash)
+            else:
+                wlg.progress_path(path)
         print('\n...all done!')
     except KeyboardInterrupt:
         print()

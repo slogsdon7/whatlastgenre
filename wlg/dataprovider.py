@@ -500,6 +500,26 @@ class Redacted(DataProvider):
                 for tag in result['tags']}
         return [{'tags': tags}]
 
+    def hash_query(self, hash):
+        res = self._query({'action': 'torrent', 'hash': hash.upper()})
+        result = {'tags': {t.replace('.', ' '): 0 for t in res['group']['tags']},
+                  'releasetype': res['group']['releaseType'],
+                  'date': str(res['group']['year'])}
+        if res['torrent']['remastered']:
+            year = str(res['torrent']['remasterYear'])
+            edition = res['torrent']['remasterTitle']
+            if year and year != str(res['group']['year']):
+                edition += ' %s' % year
+            result.update({
+                'label': res['torrent']['remasterRecordLabel'],
+                'catalognumber': res['torrent']['remasterCatalogueNumber'],
+                'edition': edition})
+        else:
+            result.update({
+                'label': res['group']['recordLabel'],
+                'catalognumber': res['group']['catalogueNumber']})
+        return result
+
     def query_album(self, album, artist=None, year=None, reltyp=None):
         """Query for album data."""
         res = self._query({'action': 'browse', 'filter_cat[1]': 1,
@@ -543,6 +563,7 @@ class Redacted(DataProvider):
                                           res_['groupId'])})
             results.append(result)
         return results
+
 
     def query_by_mbid(self, entity, mbid):
         """Query by mbid."""
