@@ -544,6 +544,7 @@ class TagLib(object):
                 # some exceptions (move to tagsfile if it gets longer)
                 return True
             if key in self.whitelist:
+                return True #TODO: address this
                 if '&' in key or key.startswith('nu '):
                     return True
             return False
