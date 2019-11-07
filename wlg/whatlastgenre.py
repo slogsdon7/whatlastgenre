@@ -251,7 +251,7 @@ class WhatLastGenre(object):
             else:
                 status = "no    tags"
             # release info
-            if query.dapr.name.lower() == 'redacted' and query.type == 'album':
+            if query.dapr.name.lower() == 'redacted' and (query.type == 'album' or query.type == 'hash'):
                 if 'releasetype' in results[0] and results[0]['releasetype']:
                     self.stats.reltyps[results[0]['releasetype']] += 1
                     release = {k: v for k, v in results[0].items()
@@ -293,7 +293,7 @@ class WhatLastGenre(object):
         """Perform a real DataProvider query."""
         res = None
         if query.type == 'hash':
-            res = query.dapr.hash_query(query.infohash)
+            res = [query.dapr.hash_query(query.infohash)]
         if query.type == 'artist':
             try:  # query by mbid
                 if query.mbid_artist:
@@ -336,6 +336,8 @@ class WhatLastGenre(object):
             querytype = 'album'
             if infohash and dapr.name.lower() == 'redacted':
                 querytype = 'hash'
+            elif infohash:
+                continue
             queries.append(Query(infohash=infohash,
                 dapr=dapr, type=querytype, score=score,
                 str=(albumartist + ' ' + album).strip(),
@@ -442,6 +444,9 @@ class TagLib(object):
         :param group: name of the tag group (artist or album)
         :param split: was split already
         """
+        if group == 'hash':
+            group = 'album'
+
         good = 0
         for key, val in tags.items():
             # resolve if not whitelisted
