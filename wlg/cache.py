@@ -54,6 +54,8 @@ class Cache(object):
         cachekey = query.artist
         if query.type == 'album':
             cachekey += query.album
+        if query.type == 'hash':
+            cachekey += query.infohash
         return query.dapr.name.lower(), query.type, cachekey.replace(' ', '')
 
     def get(self, key):
