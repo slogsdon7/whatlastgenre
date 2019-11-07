@@ -387,9 +387,24 @@ class MusicBrainz(DataProvider):
         return self._query(entity + '/' + mbid, {'inc': 'tags'})
 
 
+
 class Redacted(DataProvider):
     """Redacted.ch DataProvider"""
-
+    ReleaseTypeMap = {
+        '1': 'Album',
+        '5': 'EP',
+        '6': 'Anthology',
+        '7': 'Compilation',
+        '9': 'Single',
+        '11': 'Live Album',
+        '13': 'Remix',
+        '14': 'Bootleg',
+        '21': 'Unknown',
+        '15': 'Interview',
+        '17': 'Demo',
+        '18': 'Concert Recording',
+        '19': 'DJ Mix'
+    }
     def __init__(self, conf):
         super(Redacted, self).__init__()
         # http://github.com/WhatCD/Gazelle/wiki/JSON-API-Documentation
@@ -503,7 +518,7 @@ class Redacted(DataProvider):
     def hash_query(self, hash):
         res = self._query({'action': 'torrent', 'hash': hash.upper()})
         result = {'tags': {t.replace('.', ' '): 0 for t in res['group']['tags']},
-                  'releasetype': res['group']['releaseType'],
+                  'releasetype': self.ReleaseTypeMap[str(res['group']['releaseType'])],
                   'date': str(res['group']['year'])}
         if res['torrent']['remastered']:
             year = str(res['torrent']['remasterYear'])
@@ -547,7 +562,7 @@ class Redacted(DataProvider):
         results = []
         for res_ in res:
             result = {'tags': {t.replace('.', ' '): 0 for t in res_['tags']},
-                      'releasetype': res_['releaseType'],
+                      'releasetype': self.ReleaseTypeMap[str(res_['releaseType'])],
                       'date': str(res_['groupYear'])}
             snatched = [t for t in res_['torrents'] if t['hasSnatched']]
             if len(snatched) == 1 and self.conf.args.release:
